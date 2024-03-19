@@ -1,55 +1,19 @@
 ---
 title: "[![](lakewatch.logo.2023.png){width=2000px}](https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Connecticut-Lake-Watch) "
-subtitle: "Connecticut Department of Energy and Environmental Protection"
-date: "Report Created: `r format(Sys.Date(), '%B %Y')`"
+# subtitle: "Bantam Lake Report"
+# date: "Report Last Updated: `r format(Sys.Date(), '%B %Y')`"
 geometry: "left=0.25cm,right=0.25cm,top=0.25cm,bottom=0.25cm"
 fontsize: 11pt
-fontfamily: Archivo
 output:
   html_document:
     number_sections: no
     toc: yes
     toc_float: yes
+    css: style.css
 params:
   SiteID: "Bantam Lake, Litchfield County, CT, USA" #change this in the future
   Year: 2016-2021 #change this in the future
 ---
-
-```{css, echo = FALSE}
-
-body {
-  background-color: #0D2D6C;
-}
-#header {
-    background-color: white;
-    padding: 20px;
-}
-.section {
-    background-color: white;
-    padding: 20px;
-}
-.eutrophic {
-    width: 12px; 
-    height: 12px;
-    display: inline-block;
-    background-color: #046404; 
-    border: 1px solid #000; 
-    }
-.mesotrophic {
-    width: 12px; 
-    height: 12px;
-    display: inline-block;
-    background-color: #00b3b3; 
-    border: 1px solid #000; 
-    }
-.oligotrophic {
-    width: 12px; 
-    height: 12px;
-    display: inline-block;
-    background-color: #66ccff; 
-    border: 1px solid #000; 
-    }
-```
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
@@ -57,7 +21,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 <div class="section">
 ```{r importData}
 
-setwd("P:\\R\\VolMon_LakeWatch_LakeReport")
+# setwd("P:\\R\\VolMon_LakeWatch_LakeReport")
 
 library(leaflet)
 library(ggplot2)
@@ -79,11 +43,15 @@ data_avg <- data %>%
 data_avg$ActivityStartDate <- as.POSIXct(data_avg$ActivityStartDate)
 
 ```
+## Bantam Lake Report
+Report Last Updated: `r format(Sys.Date(), '%B %Y')`
 
+<hr>
 ### Program Information
 
 The Connecticut Lake Watch network is a statewide volunteer (i.e., community science) water quality monitoring program coordinated by DEEP as part of the larger <a href = "https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Volunteer-Water-Monitoring-Program">Connecticut Volunteer Water Monitoring Program.</a> Connecticut Lake Watch participants are trained to monitor lake/pond water clarity using a Secchi disk and thermometer. Monitoring ideally occurs weekly from early spring until fall. 
 
+<hr>
 ### Station Location
 
 ```{r leaflet maps}
@@ -100,6 +68,7 @@ leaflet(data = bantam_site, options = leafletOptions(minZoom = 8, maxZoom = 18))
   addMarkers(~LongitudeMeasure, ~LatitudeMeasure, popup = ~MonitoringLocationName,
              labelOptions = labelOptions(permanent = TRUE))
 ```
+<hr>
 ### Water Quality Data
 
 Below, you can toggle between daily average and yearly average secchi depth values.
