@@ -1,55 +1,19 @@
 ---
 title: "[![](lakewatch.logo.2023.png){width=2000px}](https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Connecticut-Lake-Watch) "
-subtitle: "Connecticut Department of Energy and Environmental Protection"
-date: "Report Created: `r format(Sys.Date(), '%B %Y')`"
+# subtitle: "Bantam Lake Report"
+# date: "Report Last Updated: `r format(Sys.Date(), '%B %Y')`"
 geometry: "left=0.25cm,right=0.25cm,top=0.25cm,bottom=0.25cm"
 fontsize: 11pt
-fontfamily: Archivo
 output:
   html_document:
     number_sections: no
     toc: yes
     toc_float: yes
+    css: style.css
 params:
   SiteID: "Bantam Lake, Litchfield County, CT, USA" #change this in the future
   Year: 2016-2021 #change this in the future
 ---
-
-```{css, echo = FALSE}
-
-body {
-  background-color: #0D2D6C;
-}
-#header {
-    background-color: white;
-    padding: 20px;
-}
-.section {
-    background-color: white;
-    padding: 20px;
-}
-.eutrophic {
-    width: 12px; 
-    height: 12px;
-    display: inline-block;
-    background-color: #046404; 
-    border: 1px solid #000; 
-    }
-.mesotrophic {
-    width: 12px; 
-    height: 12px;
-    display: inline-block;
-    background-color: #00b3b3; 
-    border: 1px solid #000; 
-    }
-.oligotrophic {
-    width: 12px; 
-    height: 12px;
-    display: inline-block;
-    background-color: #66ccff; 
-    border: 1px solid #000; 
-    }
-```
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
@@ -57,7 +21,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 <div class="section">
 ```{r importData}
 
-setwd("P:\\R\\VolMon_LakeWatch_LakeReport")
+# setwd("P:\\R\\VolMon_LakeWatch_LakeReport")
 
 library(leaflet)
 library(ggplot2)
@@ -68,8 +32,22 @@ library(dplyr)
 deep_data <- read.csv("ctdeep_secchi_depth_2012_2023.csv")
 
 #pulling from wqp
-data <- read.csv("https://www.waterqualitydata.us/data/Result/search?characteristicName=Temperature%2C%20water&characteristicName=Depth%2C%20Secchi%20disk%20depth&project=Connecticut%20Lake%20Watch&mimeType=csv&zip=no&dataProfile=resultPhysChem&providers=NWIS&providers=STEWARDS&providers=STORET")
-stations <- read.csv("https://www.waterqualitydata.us/data/Station/search?characteristicName=Depth%2C%20Secchi%20disk%20depth&project=Connecticut%20Lake%20Watch&startDateLo=01-01-2021&mimeType=csv&zip=no&providers=NWIS&providers=STEWARDS&providers=STORET")
+basd <- "https://www.waterqualitydata.us/data/Result/search?"
+bass <- "https://www.waterqualitydata.us/data/Station/search?"
+chr1 <- "characteristicName=Depth%2C%20Secchi%20disk%20depth"
+chr2 <- "&characteristicName=Temperature%2C%20water"
+proj <- "&project=Connecticut%20Lake%20Watch"
+sdat <- "&startDateLo=01-01-2021"
+dprf <- "&dataProfile=resultPhysChem"
+mime <- "&mimeType=csv"
+zipt <- "&zip=no"
+prvd <- "&providers=STORET"
+
+data_http <- paste0(basd, chr1, chr2, proj, dprf, mime, zipt, prvd)
+stations_http <- paste0(bass, chr1, proj, sdat, mime, zipt, prvd)
+
+data <- read.csv(data_http)
+stations <- read.csv(stations_http)
 stations <- subset(stations, stations$MonitoringLocationName != "CT-11-8") #station not formatted correctly
 
 #making daily averages
@@ -79,12 +57,21 @@ data_avg <- data %>%
 data_avg$ActivityStartDate <- as.POSIXct(data_avg$ActivityStartDate)
 
 ```
+<hr>
+# `r stations$MonitoringLocationName[3]` Report
+<i>Report Last Updated: `r format(Sys.Date(), '%B %Y')`</i>
+
 
 ### Program Information
+<hr>
 
-The Connecticut Lake Watch network is a statewide volunteer (i.e., community science) water quality monitoring program coordinated by DEEP as part of the larger <a href = "https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Volunteer-Water-Monitoring-Program">Connecticut Volunteer Water Monitoring Program.</a> Connecticut Lake Watch participants are trained to monitor lake/pond water clarity using a Secchi disk and thermometer. Monitoring ideally occurs weekly from early spring until fall. 
+The Connecticut Lake Watch network is a statewide volunteer (i.e., community science) water quality monitoring program coordinated by the 
+Connecticut Department of Energy and Environmental Protection (DEEP)
+as part of the larger <a href = "https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Volunteer-Water-Monitoring-Program">Connecticut Volunteer Water Monitoring Program.</a> Connecticut Lake Watch participants are trained to monitor lake/pond water clarity using a Secchi disk and thermometer. Monitoring ideally occurs weekly from early spring until fall. 
+
 
 ### Station Location
+<hr>
 
 ```{r leaflet maps}
 #test map for one site
@@ -100,9 +87,12 @@ leaflet(data = bantam_site, options = leafletOptions(minZoom = 8, maxZoom = 18))
   addMarkers(~LongitudeMeasure, ~LatitudeMeasure, popup = ~MonitoringLocationName,
              labelOptions = labelOptions(permanent = TRUE))
 ```
+
 ### Water Quality Data
+<hr>
 
 Below, you can toggle between daily average and yearly average secchi depth values.
+<br>
 <br>
 Eutrophic <div class = "eutrophic"></div> Mesotrophic <div class = "mesotrophic"></div> Oligotrophic <div class = "oligotrophic"></div>
 <br>
@@ -124,7 +114,8 @@ bolton_plot <- plot_ly(bolton_data, x = ~ActivityStartDate,
                       title = "Secchi Depth (m)"), 
          xaxis = list(showgrid = FALSE, 
                       title = "Year"), 
-         title = "Daily Average Summer Secchi Disk Readings",
+         title = list(text = "Daily Average Summer Secchi Disk Readings", 
+                      size = 14),
          shapes = list(
            list(type = "rect",
                 x0 = "2015-01-01", y0 = 0.0,
@@ -172,7 +163,8 @@ yrly_plot <- plot_ly(bolton_yearly, x = ~Year,
                       title = "Secchi Depth (m)"), 
          xaxis = list(showgrid = FALSE, 
                       title = "Year"), 
-         title = "Yearly Average Summer Secchi Disk Readings",
+         title = list( text = "Yearly Average Summer Secchi Disk Readings", 
+                       size = 14),
          shapes = list(
            list(type = "rect",
                 x0 = 2015, y0 = 0.0,
@@ -200,6 +192,7 @@ yrly_plot <- plot_ly(bolton_yearly, x = ~Year,
 yrly_plot
 ```
 </div>
+
 ```{r temp plot}
 #temp plot for one site
 bolton_temp <- subset(data_avg, data_avg$MonitoringLocationName == "Bolton Lake, Tolland County, CT, USA" & data_avg$CharacteristicName == "Temperature, water")
@@ -214,12 +207,19 @@ bolton_tempplot <- plot_ly(bolton_temp, x = ~ActivityStartDate,
   layout(yaxis = list(title = "Daily Average Temperature (deg C)"), 
          xaxis = list(showgrid = FALSE, 
                       title = "Year"), 
-         title = "Surface Water Temperature")
+         title = list(text = "Surface Water Temperature", 
+                      size = 14))
 bolton_tempplot 
 ```
 ### How Does Your Lake Compare?
+<hr>
 
-The graphs below shows how your lake ranks compared to data collected by CT DEEP over the past 20 years.
+The graphs below shows how your lake ranks compared to data collected by CT DEEP over the past 10 years.  For
+Secchi Depth, an upper percentile indicates that your lake has higher water clarity*. 
+<br>
+<br>
+Eutrophic <div class = "eutrophic"></div> Mesotrophic <div class = "mesotrophic"></div> Oligotrophic <div class = "oligotrophic"></div>
+<br>
 ```{r quartiles}
 
 #quartiles for comparison to selected lake
@@ -230,16 +230,16 @@ bolton_avg <- mean(bolton_data$daily_avg)
 
 # Determine quartile for Bolton's average
 if (bolton_avg <= quartiles[1]) {
-  bolton_quartile <- "first"
+  bolton_quartile <- "below the 25th"
 } else if (bolton_avg <= quartiles[2]) {
-  bolton_quartile <- "second"
+  bolton_quartile <- "between the 25th and 50th"
 } else if (bolton_avg <= quartiles[3]) {
-  bolton_quartile <- "third"
+  bolton_quartile <- "between the 50th and 75th"
 } else {
-  bolton_quartile <- "fourth"
+  bolton_quartile <- "above the 75th"
 }
 ```
-Your lake's average falls in the `r bolton_quartile` quartile.
+Your lake's average Secchi Depth falls in the <b>`r bolton_quartile` percentile </b> of all lakes sampled in CT by DEEP in the last 10 years.
 ```{r boxplot}
 # Create box plot
 box_plot <- ggplot(deep_data, aes(x = "", y = Transparency)) +
@@ -252,13 +252,14 @@ box_plot <- ggplot(deep_data, aes(x = "", y = Transparency)) +
   geom_boxplot(width = 0.7) +
   xlab("") +
   ylab("Secchi Depth (m)") +
-  geom_hline(yintercept = bolton_avg, color = "#0D2D6C", size = 2) +
+  geom_hline(yintercept = bolton_avg, color = "#f6931f", size = 2) +
   coord_flip()
 
 box_plot
 ```
 
-*Water clarity refers to the clearness or transparency of water and is affected by particles in the water column. Water clarity is determined by using a 20 cm disk called a Secchi disk. The maximum depth that the Secchi disk can be seen from the surface is the Secchi depth value. Secchi depth can be used to estimate the trophic status of a waterbody. 
+*Water clarity refers to the clearness or transparency of water and is affected by particles in the water column. Water clarity is determined by using a 20 cm disk called a Secchi disk. The maximum depth that the Secchi disk can be seen from the surface is the Secchi depth value. Secchi depth can be used to estimate the trophic status of a waterbody.  Secchi depth can vary based on natural and anthropogenic (human) conditions
+in and around lakes.  For more information see CT DEEP's Lake Manual (add link here).
 
 ```{js}
 function togglegraph() {
