@@ -78,3 +78,18 @@ body {
     background-color: #66ccff; 
     border: 1px solid #000; 
     }
+
+.yourLake {
+    width: 12px; 
+    height: 12px;
+    display: inline-block;
+    background-color: #f6931f; 
+    border: 1px solid #000; 
+    }
+
+.whiteBox {
+    width: 12px; 
+    height: 12px;
+    display: inline-block;
+    background-color: #ffffff; 
+    }

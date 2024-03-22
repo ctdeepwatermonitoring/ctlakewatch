@@ -94,7 +94,10 @@ leaflet(data = bantam_site, options = leafletOptions(minZoom = 8, maxZoom = 18))
 Below, you can toggle between daily average and yearly average secchi depth values.
 <br>
 <br>
-Eutrophic <div class = "eutrophic"></div> Mesotrophic <div class = "mesotrophic"></div> Oligotrophic <div class = "oligotrophic"></div>
+<div class = "eutrophic"></div>Eutrophic&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "mesotrophic"></div>Mesotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "oligotrophic"></div>Oligotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "whiteBox"></div>
 <br>
 <button id="togglebutton" onclick="togglegraph()">Toggle Graph</button>
 
@@ -150,6 +153,7 @@ bolton_data$Year <- as.numeric(format(bolton_data$ActivityStartDate, "%Y"))
 bolton_yearly <- bolton_data %>%
   group_by(Year) %>%
   summarize(yearly_avg = mean(daily_avg))
+bolton_yearly$yearly_avg <- round(bolton_yearly$yearly_avg, 2)
 
 yrly_plot <- plot_ly(bolton_yearly, x = ~Year, 
                        y = ~yearly_avg, 
@@ -196,6 +200,7 @@ yrly_plot
 ```{r temp plot}
 #temp plot for one site
 bolton_temp <- subset(data_avg, data_avg$MonitoringLocationName == "Bolton Lake, Tolland County, CT, USA" & data_avg$CharacteristicName == "Temperature, water")
+bolton_temp$daily_avg <- round(bolton_temp$daily_avg, 2)
 bolton_temp$Year <- as.numeric(format(bolton_temp$ActivityStartDate, "%Y"))
 bolton_tempplot <- plot_ly(bolton_temp, x = ~ActivityStartDate, 
                        y = ~daily_avg, 
@@ -218,7 +223,11 @@ The graphs below shows how your lake ranks compared to data collected by CT DEEP
 Secchi Depth, an upper percentile indicates that your lake has higher water clarity*. 
 <br>
 <br>
-Eutrophic <div class = "eutrophic"></div> Mesotrophic <div class = "mesotrophic"></div> Oligotrophic <div class = "oligotrophic"></div>
+<div class = "eutrophic"></div>Eutrophic&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "mesotrophic"></div>Mesotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "oligotrophic"></div>Oligotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "yourLake"></div>Your Lake's Average
+<div class = "whiteBox"></div>
 <br>
 ```{r quartiles}
 
@@ -253,7 +262,8 @@ box_plot <- ggplot(deep_data, aes(x = "", y = Transparency)) +
   xlab("") +
   ylab("Secchi Depth (m)") +
   geom_hline(yintercept = bolton_avg, color = "#f6931f", size = 2) +
-  coord_flip()
+  geom_text(aes(x = 1, y = (bolton_avg - 0.4), label = "Your Lake's Average")) +
+  scale_y_reverse()
 
 box_plot
 ```
