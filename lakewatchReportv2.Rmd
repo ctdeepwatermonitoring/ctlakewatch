@@ -1,7 +1,5 @@
 ---
 title: "[![](lakewatch.logo.2023.png){width=2000px}](https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Connecticut-Lake-Watch) "
-# subtitle: "Bolton Lake Report"
-# date: "Report Last Updated: `r format(Sys.Date(), '%B %Y')`"
 geometry: "left=0.25cm,right=0.25cm,top=0.25cm,bottom=0.25cm"
 fontsize: 11pt
 output:
@@ -33,7 +31,7 @@ deep_data <- read.csv("ctdeep_secchi_depth_2012_2023.csv")
 
 # pulling from wqp
 basd <- "https://www.waterqualitydata.us/data/Result/search?"
-bass <- "https://www.waterqualitydata.us/data/Station/search?"
+bass <- "https://www.waterqualitydata.us/data/Station/search?organization=CTVOLMON&" #my stations only
 chr1 <- "characteristicName=Depth%2C%20Secchi%20disk%20depth"
 chr2 <- "&characteristicName=Temperature%2C%20water"
 proj <- "&project=Connecticut%20Lake%20Watch"
@@ -48,9 +46,10 @@ stations_http <- paste0(bass, chr1, proj, sdat, mime, zipt, prvd)
 
 data <- read.csv(data_http)
 stations <- read.csv(stations_http)
-stations <- subset(stations, stations$MonitoringLocationName != "CT-11-8") #station not formatted correctly
+stations <- subset(stations, stations$MonitoringLocationName != "CT-11-8") # station not formatted correctly
 
-#making daily averages
+# manipulating the data
+data <- subset(data, data$ResultDepthHeightMeasure.MeasureValue <= 1 | is.na(data$ResultDepthHeightMeasure.MeasureValue)) #only surface temp (0-1) or Secchi reading (NA)
 data_avg <- data %>%
   group_by(MonitoringLocationName, ActivityStartDate, CharacteristicName, ResultMeasure.MeasureUnitCode) %>%
   summarise(daily_avg = mean(ResultMeasureValue))
@@ -74,7 +73,7 @@ as part of the larger <a href = "https://portal.ct.gov/DEEP/Water/Inland-Water-M
 <hr>
 
 ```{r leaflet maps}
-#test map for one site
+
 site <- subset(stations, stations$MonitoringLocationName == params$SiteID)
 
 sViewLon <- site$LongitudeMeasure
@@ -103,7 +102,7 @@ Below, you can toggle between daily average and yearly average secchi depth valu
 
 <div id = "dailyavg">
 ```{r daily avg plot}
-#test daily avg plot for one site - toggle between this and yrly avg
+
 daily_avg <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Depth, Secchi disk depth")
 secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate, 
                        y = ~daily_avg, 
@@ -148,7 +147,7 @@ secchi_plot_daily
 </div>
 <div id = "yearlyavg" style="display:none;">
 ```{r yearly avg plot}
-#yearly avg plot
+
 daily_avg$Year <- as.numeric(format(daily_avg$ActivityStartDate, "%Y"))
 yearly_avg <- daily_avg %>%
   group_by(Year) %>%
@@ -198,8 +197,10 @@ secchi_plot_yearly
 </div>
 
 ```{r temp plot}
-#temp plot for one site
+
 temp <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Temperature, water")
+temp$daily_avg <- ifelse(temp$ResultMeasure.MeasureUnitCode == "deg F", 
+                (temp$daily_avg - 32) / 1.8, temp$daily_avg) # convert F to C
 temp$daily_avg <- round(temp$daily_avg, 2)
 temp$Year <- as.numeric(format(temp$ActivityStartDate, "%Y"))
 temp_plot <- plot_ly(temp, x = ~ActivityStartDate, 
@@ -212,7 +213,7 @@ temp_plot <- plot_ly(temp, x = ~ActivityStartDate,
   layout(yaxis = list(title = "Daily Average Temperature (deg C)"), 
          xaxis = list(showgrid = FALSE, 
                       title = "Year"), 
-         title = list(text = "Surface Water Temperature", 
+         title = list(text = "Surface (0 - 1 meter) Water Temperature", 
                       size = 14))
 temp_plot 
 ```
@@ -231,13 +232,13 @@ Secchi Depth, an upper percentile indicates that your lake has higher water clar
 <br>
 ```{r quartiles}
 
-#quartiles for comparison to selected lake
+# quartiles for comparison to selected lake
 quartiles <- quantile(deep_data$Transparency, probs = c(0.25, 0.5, 0.75))
 
 # bolton's average transparency
 avg <- mean(daily_avg$daily_avg)
 
-# Determine quartile for Bolton's average
+# Determine quartile for your lake's average
 if (avg <= quartiles[1]) {
   quartile <- "below the 25th"
 } else if (avg <= quartiles[2]) {
