@@ -1,5 +1,5 @@
 ---
-title: "[![](lakewatch.logo.2023.png){width=2000px}](https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Connecticut-Lake-Watch) "
+title: "[![](ctlakewatch_newlogo.png){width=2000px}](https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Connecticut-Lake-Watch) "
 geometry: "left=0.25cm,right=0.25cm,top=0.25cm,bottom=0.25cm"
 fontsize: 11pt
 output:
