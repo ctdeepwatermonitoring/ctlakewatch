@@ -1,6 +1,6 @@
 ---
 title: "[![](lakewatch.logo.2023.png){width=2000px}](https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Connecticut-Lake-Watch) "
-# subtitle: "Bantam Lake Report"
+# subtitle: "Bolton Lake Report"
 # date: "Report Last Updated: `r format(Sys.Date(), '%B %Y')`"
 geometry: "left=0.25cm,right=0.25cm,top=0.25cm,bottom=0.25cm"
 fontsize: 11pt
@@ -11,7 +11,7 @@ output:
     toc_float: yes
     css: style.css
 params:
-  SiteID: "Bantam Lake, Litchfield County, CT, USA" #change this in the future
+  SiteID: "Bolton Lakes, Tolland County, CT, USA" #change this in the future
   Year: 2016-2021 #change this in the future
 ---
 
@@ -28,10 +28,10 @@ library(ggplot2)
 library(plotly)
 library(dplyr)
 
-#for comparing your lake to our data
+# for comparing your lake to our data
 deep_data <- read.csv("ctdeep_secchi_depth_2012_2023.csv")
 
-#pulling from wqp
+# pulling from wqp
 basd <- "https://www.waterqualitydata.us/data/Result/search?"
 bass <- "https://www.waterqualitydata.us/data/Station/search?"
 chr1 <- "characteristicName=Depth%2C%20Secchi%20disk%20depth"
@@ -58,7 +58,7 @@ data_avg$ActivityStartDate <- as.POSIXct(data_avg$ActivityStartDate)
 
 ```
 <hr>
-# `r stations$MonitoringLocationName[3]` Report
+# `r stations$MonitoringLocationName[6]` Report
 <i>Report Last Updated: `r format(Sys.Date(), '%B %Y')`</i>
 
 
@@ -75,12 +75,12 @@ as part of the larger <a href = "https://portal.ct.gov/DEEP/Water/Inland-Water-M
 
 ```{r leaflet maps}
 #test map for one site
-bantam_site <- subset(stations, stations$MonitoringLocationName == "Bantam Lake, Litchfield County, CT, USA")
+site <- subset(stations, stations$MonitoringLocationName == params$SiteID)
 
-sViewLon <- bantam_site$LongitudeMeasure
-sViewLat <-bantam_site$LatitudeMeasure
+sViewLon <- site$LongitudeMeasure
+sViewLat <-site$LatitudeMeasure
 
-leaflet(data = bantam_site, options = leafletOptions(minZoom = 8, maxZoom = 18)) %>%
+leaflet(data = site, options = leafletOptions(minZoom = 8, maxZoom = 18)) %>%
   setView(lng = sViewLon, lat = sViewLat, zoom = 13) %>%
   addTiles() %>%
   addProviderTiles("Esri.WorldGrayCanvas", group = "Esri GrayCanvas") %>%
@@ -104,8 +104,8 @@ Below, you can toggle between daily average and yearly average secchi depth valu
 <div id = "dailyavg">
 ```{r daily avg plot}
 #test daily avg plot for one site - toggle between this and yrly avg
-bolton_data <- subset(data_avg, data_avg$MonitoringLocationName == "Bolton Lake, Tolland County, CT, USA" & data_avg$CharacteristicName == "Depth, Secchi disk depth")
-bolton_plot <- plot_ly(bolton_data, x = ~ActivityStartDate, 
+daily_avg <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Depth, Secchi disk depth")
+secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate, 
                        y = ~daily_avg, 
                        type = 'scatter', 
                        mode = 'markers', 
@@ -122,20 +122,20 @@ bolton_plot <- plot_ly(bolton_data, x = ~ActivityStartDate,
          shapes = list(
            list(type = "rect",
                 x0 = "2015-01-01", y0 = 0.0,
-                x1 = "2024-01-01", y1 = 2.8,
+                x1 = "2024-01-01", y1 = 2.0,
                 fillcolor = "#046404",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
-                x0 = "2015-01-01", y0 = 2.8,
-                x1 = "2024-01-01", y1 = 7,
+                x0 = "2015-01-01", y0 = 2.0,
+                x1 = "2024-01-01", y1 = 6,
                 fillcolor = "#00b3b3",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
-                x0 = "2015-01-01", y0 = 7,
+                x0 = "2015-01-01", y0 = 6,
                 x1 = "2024-01-01", y1 = 15,
                 fillcolor = "#66ccff",
                 opacity = 1,
@@ -143,19 +143,19 @@ bolton_plot <- plot_ly(bolton_data, x = ~ActivityStartDate,
                 line = list(width = 0))
          ))
 
-bolton_plot
+secchi_plot_daily
 ```
 </div>
 <div id = "yearlyavg" style="display:none;">
 ```{r yearly avg plot}
 #yearly avg plot
-bolton_data$Year <- as.numeric(format(bolton_data$ActivityStartDate, "%Y"))
-bolton_yearly <- bolton_data %>%
+daily_avg$Year <- as.numeric(format(daily_avg$ActivityStartDate, "%Y"))
+yearly_avg <- daily_avg %>%
   group_by(Year) %>%
   summarize(yearly_avg = mean(daily_avg))
-bolton_yearly$yearly_avg <- round(bolton_yearly$yearly_avg, 2)
+yearly_avg$yearly_avg <- round(yearly_avg$yearly_avg, 2)
 
-yrly_plot <- plot_ly(bolton_yearly, x = ~Year, 
+secchi_plot_yearly <- plot_ly(yearly_avg, x = ~Year, 
                        y = ~yearly_avg, 
                        type = 'scatter', 
                        mode = 'markers', 
@@ -172,20 +172,20 @@ yrly_plot <- plot_ly(bolton_yearly, x = ~Year,
          shapes = list(
            list(type = "rect",
                 x0 = 2015, y0 = 0.0,
-                x1 = 2024, y1 = 2.8,
+                x1 = 2024, y1 = 2.0,
                 fillcolor = "#046404",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
-                x0 = 2015, y0 = 2.8,
-                x1 = 2024, y1 = 7,
+                x0 = 2015, y0 = 2.0,
+                x1 = 2024, y1 = 6,
                 fillcolor = "#00b3b3",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
-                x0 = 2015, y0 = 7,
+                x0 = 2015, y0 = 6,
                 x1 = 2024, y1 = 15,
                 fillcolor = "#66ccff",
                 opacity = 1,
@@ -193,16 +193,16 @@ yrly_plot <- plot_ly(bolton_yearly, x = ~Year,
                 line = list(width = 0))
          ))
 
-yrly_plot
+secchi_plot_yearly
 ```
 </div>
 
 ```{r temp plot}
 #temp plot for one site
-bolton_temp <- subset(data_avg, data_avg$MonitoringLocationName == "Bolton Lake, Tolland County, CT, USA" & data_avg$CharacteristicName == "Temperature, water")
-bolton_temp$daily_avg <- round(bolton_temp$daily_avg, 2)
-bolton_temp$Year <- as.numeric(format(bolton_temp$ActivityStartDate, "%Y"))
-bolton_tempplot <- plot_ly(bolton_temp, x = ~ActivityStartDate, 
+temp <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Temperature, water")
+temp$daily_avg <- round(temp$daily_avg, 2)
+temp$Year <- as.numeric(format(temp$ActivityStartDate, "%Y"))
+temp_plot <- plot_ly(temp, x = ~ActivityStartDate, 
                        y = ~daily_avg, 
                        type = 'scatter', 
                        mode = 'markers', 
@@ -214,7 +214,7 @@ bolton_tempplot <- plot_ly(bolton_temp, x = ~ActivityStartDate,
                       title = "Year"), 
          title = list(text = "Surface Water Temperature", 
                       size = 14))
-bolton_tempplot 
+temp_plot 
 ```
 ### How Does Your Lake Compare?
 <hr>
@@ -235,41 +235,41 @@ Secchi Depth, an upper percentile indicates that your lake has higher water clar
 quartiles <- quantile(deep_data$Transparency, probs = c(0.25, 0.5, 0.75))
 
 # bolton's average transparency
-bolton_avg <- mean(bolton_data$daily_avg)
+avg <- mean(daily_avg$daily_avg)
 
 # Determine quartile for Bolton's average
-if (bolton_avg <= quartiles[1]) {
-  bolton_quartile <- "below the 25th"
-} else if (bolton_avg <= quartiles[2]) {
-  bolton_quartile <- "between the 25th and 50th"
-} else if (bolton_avg <= quartiles[3]) {
-  bolton_quartile <- "between the 50th and 75th"
+if (avg <= quartiles[1]) {
+  quartile <- "below the 25th"
+} else if (avg <= quartiles[2]) {
+  quartile <- "between the 25th and 50th"
+} else if (avg <= quartiles[3]) {
+  quartile <- "between the 50th and 75th"
 } else {
-  bolton_quartile <- "above the 75th"
+  quartile <- "above the 75th"
 }
 ```
-Your lake's average Secchi Depth falls in the <b>`r bolton_quartile` percentile </b> of all lakes sampled in CT by DEEP in the last 10 years.
+Your lake's average Secchi Depth falls in the <b>`r quartile` percentile </b> of all lakes sampled in CT by DEEP in the last 10 years.
 ```{r boxplot}
 # Create box plot
 box_plot <- ggplot(deep_data, aes(x = "", y = Transparency)) +
-  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 0, ymax = 2.8),
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 0, ymax = 2.0),
             fill = "#046404", alpha = 0.5) +
-  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 2.8, ymax = 7),
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 2.0, ymax = 6),
             fill = "#00b3b3", alpha = 0.5) +
-  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 7, ymax = 15),
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 6, ymax = 15),
             fill = "#66ccff", alpha = 0.5) +
   geom_boxplot(width = 0.7) +
   xlab("") +
   ylab("Secchi Depth (m)") +
-  geom_hline(yintercept = bolton_avg, color = "#f6931f", size = 2) +
-  geom_text(aes(x = 1, y = (bolton_avg - 0.4), label = "Your Lake's Average")) +
+  geom_hline(yintercept = avg, color = "#f6931f", size = 2) +
+  geom_text(aes(x = 1, y = (avg - 0.4), label = "Your Lake's Average")) +
   scale_y_reverse()
 
 box_plot
 ```
 
 *Water clarity refers to the clearness or transparency of water and is affected by particles in the water column. Water clarity is determined by using a 20 cm disk called a Secchi disk. The maximum depth that the Secchi disk can be seen from the surface is the Secchi depth value. Secchi depth can be used to estimate the trophic status of a waterbody.  Secchi depth can vary based on natural and anthropogenic (human) conditions
-in and around lakes.  For more information see CT DEEP's Lake Manual (add link here).
+in and around lakes.  For more information see <a href = "#">CT DEEP's Lake Manual</a>.
 
 ```{js}
 function togglegraph() {
