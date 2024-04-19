@@ -1,5 +1,5 @@
 ---
-title: "[![](ctlakewatch_newlogo.png){width=2000px}](https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Connecticut-Lake-Watch) "
+title: "[![](ctlw_logo_v2.png){width=2000px}](https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Connecticut-Lake-Watch) "
 geometry: "left=0.25cm,right=0.25cm,top=0.25cm,bottom=0.25cm"
 fontsize: 11pt
 output:
@@ -9,8 +9,7 @@ output:
     toc_float: yes
     css: style.css
 params:
-  SiteID: "Bolton Lakes, Tolland County, CT, USA" #change this in the future
-  Year: 2016-2021 #change this in the future
+  SiteID: Wangumbaug Lake, Tolland County, CT, USA
 ---
 
 ```{r setup, include = FALSE}
@@ -29,24 +28,25 @@ library(dplyr)
 # for comparing your lake to our data
 deep_data <- read.csv("ctdeep_secchi_depth_2012_2023.csv")
 
-# pulling from wqp
 basd <- "https://www.waterqualitydata.us/data/Result/search?"
-bass <- "https://www.waterqualitydata.us/data/Station/search?organization=CTVOLMON&" #my stations only
+bass <- "https://www.waterqualitydata.us/data/Station/search?" #my stations only
 chr1 <- "characteristicName=Depth%2C%20Secchi%20disk%20depth"
 chr2 <- "&characteristicName=Temperature%2C%20water"
 proj <- "&project=Connecticut%20Lake%20Watch"
+proj2 <- "&project=CTLakeWatch" #what i uploaded
 sdat <- "&startDateLo=01-01-2021"
 dprf <- "&dataProfile=resultPhysChem"
 mime <- "&mimeType=csv"
 zipt <- "&zip=no"
 prvd <- "&providers=STORET"
 
-data_http <- paste0(basd, chr1, chr2, proj, dprf, mime, zipt, prvd)
-stations_http <- paste0(bass, chr1, proj, sdat, mime, zipt, prvd)
+data_http <- paste0(basd, chr1, chr2, proj, proj2, dprf, mime, zipt, prvd)
+stations_http <- paste0(bass, chr1, proj, proj2, sdat, mime, zipt, prvd)
 
 data <- read.csv(data_http)
-stations <- read.csv(stations_http)
-stations <- subset(stations, stations$MonitoringLocationName != "CT-11-8") # station not formatted correctly
+# stations <- read.csv(stations_http) #for now manually reading due to 2 data sources
+# stations <- subset(stations, stations$MonitoringLocationName != "CT-11-8") # station not formatted correctly
+stations <- read.csv("stations.csv") #these stations were manually looked over based on what was submitted by me or NALMS
 
 # manipulating the data
 data <- subset(data, data$ResultDepthHeightMeasure.MeasureValue <= 1 | is.na(data$ResultDepthHeightMeasure.MeasureValue)) #only surface temp (0-1) or Secchi reading (NA)
@@ -57,7 +57,7 @@ data_avg$ActivityStartDate <- as.POSIXct(data_avg$ActivityStartDate)
 
 ```
 <hr>
-# `r stations$MonitoringLocationName[6]` Report
+# `r params$SiteID` Report
 <i>Report Last Updated: `r format(Sys.Date(), '%B %Y')`</i>
 
 
@@ -76,8 +76,8 @@ as part of the larger <a href = "https://portal.ct.gov/DEEP/Water/Inland-Water-M
 
 site <- subset(stations, stations$MonitoringLocationName == params$SiteID)
 
-sViewLon <- site$LongitudeMeasure
-sViewLat <-site$LatitudeMeasure
+sViewLon <- mean(site$LongitudeMeasure) #accounts for multiple points
+sViewLat <- mean(site$LatitudeMeasure)
 
 leaflet(data = site, options = leafletOptions(minZoom = 8, maxZoom = 18)) %>%
   setView(lng = sViewLon, lat = sViewLat, zoom = 13) %>%
@@ -112,6 +112,8 @@ secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate,
                        text = ~paste("Date:", ActivityStartDate, "<br>", "Value:", daily_avg, " m"),
                        marker = list(size = 10, color = "white", line = list(color = "black", width = 1))) %>%
   layout(yaxis = list(autorange = "reversed", 
+                      dtick = 2,
+                      tick0 = 0,
                       showgrid = FALSE, 
                       title = "Secchi Depth (m)"), 
          xaxis = list(showgrid = FALSE, 
@@ -162,6 +164,8 @@ secchi_plot_yearly <- plot_ly(yearly_avg, x = ~Year,
                        text = ~paste("Year:", Year, "<br>", "Value:", yearly_avg, " m"),
                        marker = list(size = 10, color = "white", line = list(color = "black", width = 1))) %>%
   layout(yaxis = list(autorange = "reversed", 
+                      dtick = 2,
+                      tick0 = 0,
                       showgrid = FALSE, 
                       title = "Secchi Depth (m)"), 
          xaxis = list(showgrid = FALSE, 
@@ -196,26 +200,30 @@ secchi_plot_yearly
 ```
 </div>
 
-```{r temp plot}
-
+```{r temp plot, results='asis'}
 temp <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Temperature, water")
 temp$daily_avg <- ifelse(temp$ResultMeasure.MeasureUnitCode == "deg F", 
                 (temp$daily_avg - 32) / 1.8, temp$daily_avg) # convert F to C
 temp$daily_avg <- round(temp$daily_avg, 2)
 temp$Year <- as.numeric(format(temp$ActivityStartDate, "%Y"))
-temp_plot <- plot_ly(temp, x = ~ActivityStartDate, 
+
+if (nrow(temp) == 0) {
+  cat('<div>There is no surface water temperature data available for this lake.</div>') # prints this instead of broken graph if no temp data
+} else {
+  temp_plot <- plot_ly(temp, x = ~ActivityStartDate, 
                        y = ~daily_avg, 
                        type = 'scatter', 
                        mode = 'markers', 
                        hoverinfo = 'text',
                        text = ~paste("Date:", ActivityStartDate, "<br>", "Value:", daily_avg, " deg C"),
                        marker = list(size = 10, color = "white", line = list(color = "black", width = 1))) %>%
-  layout(yaxis = list(title = "Daily Average Temperature (deg C)"), 
-         xaxis = list(showgrid = FALSE, 
-                      title = "Year"), 
-         title = list(text = "Surface (0 - 1 meter) Water Temperature", 
-                      size = 14))
-temp_plot 
+    layout(yaxis = list(title = "Daily Average Temperature (deg C)"), 
+           xaxis = list(showgrid = FALSE, 
+                        title = "Year"), 
+           title = list(text = "Surface (0 - 1 foot) Water Temperature", 
+                        size = 14))
+  temp_plot
+} 
 ```
 ### How Does Your Lake Compare?
 <hr>
@@ -229,6 +237,7 @@ Secchi Depth, an upper percentile indicates that your lake has higher water clar
 <div class = "oligotrophic"></div>Oligotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <div class = "yourLake"></div>Your Lake's Average
 <div class = "whiteBox"></div>
+<br>
 <br>
 ```{r quartiles}
 
@@ -264,7 +273,7 @@ box_plot <- ggplot(deep_data, aes(x = "", y = Transparency)) +
   ylab("Secchi Depth (m)") +
   geom_hline(yintercept = avg, color = "#f6931f", size = 2) +
   geom_text(aes(x = 1, y = (avg - 0.4), label = "Your Lake's Average")) +
-  scale_y_reverse()
+  scale_y_reverse(breaks=c(0, 2, 4, 6, 8, 10, 12, 14))
 
 box_plot
 ```
