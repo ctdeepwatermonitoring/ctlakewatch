@@ -10,6 +10,7 @@ output:
     css: style.css
 params:
   SiteID: Wangumbaug Lake, Tolland County, CT, USA
+  MaxDepth: 10
 ---
 
 ```{r setup, include = FALSE}
@@ -80,7 +81,7 @@ sViewLon <- mean(site$LongitudeMeasure) #accounts for multiple points
 sViewLat <- mean(site$LatitudeMeasure)
 
 leaflet(data = site, options = leafletOptions(minZoom = 8, maxZoom = 18)) %>%
-  setView(lng = sViewLon, lat = sViewLat, zoom = 13) %>%
+  setView(lng = sViewLon, lat = sViewLat, zoom = 14) %>%
   addTiles() %>%
   addProviderTiles("Esri.WorldGrayCanvas", group = "Esri GrayCanvas") %>%
   addMarkers(~LongitudeMeasure, ~LatitudeMeasure, popup = ~MonitoringLocationName,
@@ -90,7 +91,7 @@ leaflet(data = site, options = leafletOptions(minZoom = 8, maxZoom = 18)) %>%
 ### Water Quality Data
 <hr>
 
-Below, you can toggle between daily average and yearly average secchi depth values.
+Below, you can toggle between daily average and yearly average secchi depth values. The graphs have been scaled to the approximate maximum depth of the waterbody, represented by the horizontal dotted line.
 <br>
 <br>
 <div class = "eutrophic"></div>Eutrophic&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -104,6 +105,9 @@ Below, you can toggle between daily average and yearly average secchi depth valu
 ```{r daily avg plot}
 
 daily_avg <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Depth, Secchi disk depth")
+y1_2 <- ifelse(params$MaxDepth < 6.0, params$MaxDepth, 6.0)
+y1_3 <- ifelse(params$MaxDepth > 6.0, params$MaxDepth, 6.0)
+
 secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate, 
                        y = ~daily_avg, 
                        type = 'scatter', 
@@ -120,28 +124,40 @@ secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate,
                       title = "Year"), 
          title = list(text = "Daily Average Summer Secchi Disk Readings", 
                       size = 14),
+         annotations = list(
+           x = "2020-01-01",
+           y = params$MaxDepth,
+           text = "Lake Max Depth",
+           arrowcolor = "#f6931f",
+           font = list(
+             color = "black")
+         ),
          shapes = list(
            list(type = "rect",
                 x0 = "2015-01-01", y0 = 0.0,
-                x1 = "2024-01-01", y1 = 2.0,
+                x1 = "2024-01-01", y1 = 2,
                 fillcolor = "#046404",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
-                x0 = "2015-01-01", y0 = 2.0,
-                x1 = "2024-01-01", y1 = 6,
+                x0 = "2015-01-01", y0 = 2,
+                x1 = "2024-01-01", y1 = y1_2,
                 fillcolor = "#00b3b3",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
                 x0 = "2015-01-01", y0 = 6,
-                x1 = "2024-01-01", y1 = 15,
+                x1 = "2024-01-01", y1 = y1_3,
                 fillcolor = "#66ccff",
                 opacity = 1,
                 layer = "below",
-                line = list(width = 0))
+                line = list(width = 0)),
+           list(type = "line",
+                x0 = "2015-01-01", y0 = params$MaxDepth,
+                x1 = "2024-01-01", y1 = params$MaxDepth,
+                line = list(color = "black", dash = "dot"))
          ))
 
 secchi_plot_daily
@@ -172,6 +188,14 @@ secchi_plot_yearly <- plot_ly(yearly_avg, x = ~Year,
                       title = "Year"), 
          title = list( text = "Yearly Average Summer Secchi Disk Readings", 
                        size = 14),
+                  annotations = list(
+           x = "2020-01-01",
+           y = params$MaxDepth,
+           text = "Lake Max Depth",
+           arrowcolor = "#f6931f",
+           font = list(
+             color = "black")
+         ),
          shapes = list(
            list(type = "rect",
                 x0 = 2015, y0 = 0.0,
@@ -182,18 +206,22 @@ secchi_plot_yearly <- plot_ly(yearly_avg, x = ~Year,
                 line = list(width = 0)),
            list(type = "rect",
                 x0 = 2015, y0 = 2.0,
-                x1 = 2024, y1 = 6,
+                x1 = 2024, y1 = y1_2,
                 fillcolor = "#00b3b3",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
                 x0 = 2015, y0 = 6,
-                x1 = 2024, y1 = 15,
+                x1 = 2024, y1 = y1_3,
                 fillcolor = "#66ccff",
                 opacity = 1,
                 layer = "below",
-                line = list(width = 0))
+                line = list(width = 0)),
+           list(type = "line",
+                x0 = 2015, y0 = params$MaxDepth,
+                x1 = 2024, y1 = params$MaxDepth,
+                line = list(color = "black", dash = "dot"))
          ))
 
 secchi_plot_yearly
@@ -228,8 +256,7 @@ if (nrow(temp) == 0) {
 ### How Does Your Lake Compare?
 <hr>
 
-The graphs below shows how your lake ranks compared to data collected by CT DEEP over the past 10 years.  For
-Secchi Depth, an upper percentile indicates that your lake has higher water clarity*. 
+The graphs below shows how your lake ranks compared to data collected by CT DEEP over the past 10 years, across all lakes in the state.  For Secchi Depth, an upper percentile indicates that your lake has higher water clarity*. 
 <br>
 <br>
 <div class = "eutrophic"></div>Eutrophic&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -259,6 +286,9 @@ if (avg <= quartiles[1]) {
 }
 ```
 Your lake's average Secchi Depth falls in the <b>`r quartile` percentile </b> of all lakes sampled in CT by DEEP in the last 10 years.
+<br>
+<br>
+The max depth of your lake is <b>`r params$MaxDepth` meters </b>.
 ```{r boxplot}
 # Create box plot
 box_plot <- ggplot(deep_data, aes(x = "", y = Transparency)) +
