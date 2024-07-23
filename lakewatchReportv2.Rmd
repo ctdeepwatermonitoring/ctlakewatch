@@ -9,12 +9,12 @@ output:
     toc_float: yes
     css: style.css
 params:
-  SiteID: Wangumbaug Lake, Tolland County, CT, USA
+  SiteID: Bolton Lakes, Tolland County, CT, USA
   MaxDepth: 10
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.align = 'center')
 ```
 <div class="section">
 ```{r importData}
@@ -62,7 +62,7 @@ data_avg$ActivityStartDate <- as.POSIXct(data_avg$ActivityStartDate)
 <i>Report Last Updated: `r format(Sys.Date(), '%B %Y')`</i>
 
 
-### Program Information
+## Program Information
 <hr>
 
 The Connecticut Lake Watch network is a statewide volunteer (i.e., community science) water quality monitoring program coordinated by the 
@@ -70,10 +70,10 @@ Connecticut Department of Energy and Environmental Protection (DEEP)
 as part of the larger <a href = "https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Volunteer-Water-Monitoring-Program">Connecticut Volunteer Water Monitoring Program.</a> Connecticut Lake Watch participants are trained to monitor lake/pond water clarity using a Secchi disk and thermometer. Monitoring ideally occurs weekly from early spring until fall. 
 
 
-### Station Location
+## Station Location
 <hr>
 
-```{r leaflet maps}
+```{r leaflet maps, out.width="100%"}
 
 site <- subset(stations, stations$MonitoringLocationName == params$SiteID)
 
@@ -84,11 +84,11 @@ leaflet(data = site, options = leafletOptions(minZoom = 8, maxZoom = 18)) %>%
   setView(lng = sViewLon, lat = sViewLat, zoom = 14) %>%
   addTiles() %>%
   addProviderTiles("Esri.WorldGrayCanvas", group = "Esri GrayCanvas") %>%
-  addMarkers(~LongitudeMeasure, ~LatitudeMeasure, popup = ~MonitoringLocationName,
-             labelOptions = labelOptions(permanent = TRUE))
+  addMarkers(~LongitudeMeasure, ~LatitudeMeasure, label = ~MonitoringLocationName,
+             labelOptions = labelOptions(permanent = FALSE))
 ```
 
-### Water Quality Data
+## Secchi Depth Data {.tabset}
 <hr>
 
 Below, you can toggle between daily average and yearly average secchi depth values. The graphs have been scaled to the approximate maximum depth of the waterbody, represented by the horizontal dotted line.
@@ -99,14 +99,15 @@ Below, you can toggle between daily average and yearly average secchi depth valu
 <div class = "oligotrophic"></div>Oligotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <div class = "whiteBox"></div>
 <br>
-<button id="togglebutton" onclick="togglegraph()">Toggle Graph</button>
 
-<div id = "dailyavg">
-```{r daily avg plot}
+### Daily Average
+```{r daily avg plot, out.width="100%"}
 
 daily_avg <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Depth, Secchi disk depth")
 y1_2 <- ifelse(params$MaxDepth < 6.0, params$MaxDepth, 6.0)
 y1_3 <- ifelse(params$MaxDepth > 6.0, params$MaxDepth, 6.0)
+
+mid_x <- mean(range(daily_avg$ActivityStartDate))
 
 secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate, 
                        y = ~daily_avg, 
@@ -125,7 +126,7 @@ secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate,
          title = list(text = "Daily Average Summer Secchi Disk Readings", 
                       size = 14),
          annotations = list(
-           x = "2020-01-01",
+           x = mid_x,
            y = params$MaxDepth,
            text = "Lake Max Depth",
            arrowcolor = "#f6931f",
@@ -162,15 +163,17 @@ secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate,
 
 secchi_plot_daily
 ```
-</div>
-<div id = "yearlyavg" style="display:none;">
-```{r yearly avg plot}
+
+### Yearly Average
+```{r yearly avg plot, out.width="100%"}
 
 daily_avg$Year <- as.numeric(format(daily_avg$ActivityStartDate, "%Y"))
 yearly_avg <- daily_avg %>%
   group_by(Year) %>%
   summarize(yearly_avg = mean(daily_avg))
 yearly_avg$yearly_avg <- round(yearly_avg$yearly_avg, 2)
+
+mid_x <- mean(range(yearly_avg$Year))
 
 secchi_plot_yearly <- plot_ly(yearly_avg, x = ~Year, 
                        y = ~yearly_avg, 
@@ -189,7 +192,7 @@ secchi_plot_yearly <- plot_ly(yearly_avg, x = ~Year,
          title = list( text = "Yearly Average Summer Secchi Disk Readings", 
                        size = 14),
                   annotations = list(
-           x = "2020-01-01",
+           x = mid_x,
            y = params$MaxDepth,
            text = "Lake Max Depth",
            arrowcolor = "#f6931f",
@@ -226,9 +229,10 @@ secchi_plot_yearly <- plot_ly(yearly_avg, x = ~Year,
 
 secchi_plot_yearly
 ```
-</div>
 
-```{r temp plot, results='asis'}
+## Water Temperature Data
+<hr>
+```{r temp plot, results='asis', out.width="100%"}
 temp <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Temperature, water")
 temp$daily_avg <- ifelse(temp$ResultMeasure.MeasureUnitCode == "deg F", 
                 (temp$daily_avg - 32) / 1.8, temp$daily_avg) # convert F to C
@@ -253,7 +257,7 @@ if (nrow(temp) == 0) {
   temp_plot
 } 
 ```
-### How Does Your Lake Compare?
+## How Does Your Lake Compare?
 <hr>
 
 The graphs below shows how your lake ranks compared to data collected by CT DEEP over the past 10 years, across all lakes in the state.  For Secchi Depth, an upper percentile indicates that your lake has higher water clarity*. 
@@ -311,18 +315,4 @@ box_plot
 *Water clarity refers to the clearness or transparency of water and is affected by particles in the water column. Water clarity is determined by using a 20 cm disk called a Secchi disk. The maximum depth that the Secchi disk can be seen from the surface is the Secchi depth value. Secchi depth can be used to estimate the trophic status of a waterbody.  Secchi depth can vary based on natural and anthropogenic (human) conditions
 in and around lakes.  For more information see <a href = "#">CT DEEP's Lake Manual</a>.
 
-```{js}
-function togglegraph() {
-  var dailyavg = document.getElementById("dailyavg");
-  var yearlyavg = document.getElementById("yearlyavg");
-  
-  if (dailyavg.style.display === "none") {
-    dailyavg.style.display = "block";
-    yearlyavg.style.display = "none";
-  } else {
-    dailyavg.style.display = "none";
-    yearlyavg.style.display = "block";
-  }
-}
-```
 </div>
