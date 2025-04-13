@@ -136,28 +136,28 @@ secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate,
          shapes = list(
            list(type = "rect",
                 x0 = "2015-01-01", y0 = 0.0,
-                x1 = "2024-01-01", y1 = 2,
+                x1 = "2025-01-01", y1 = 2,
                 fillcolor = "#046404",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
                 x0 = "2015-01-01", y0 = 2,
-                x1 = "2024-01-01", y1 = y1_2,
+                x1 = "2025-01-01", y1 = y1_2,
                 fillcolor = "#00b3b3",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
                 x0 = "2015-01-01", y0 = 6,
-                x1 = "2024-01-01", y1 = y1_3,
+                x1 = "2025-01-01", y1 = y1_3,
                 fillcolor = "#66ccff",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "line",
                 x0 = "2015-01-01", y0 = params$MaxDepth,
-                x1 = "2024-01-01", y1 = params$MaxDepth,
+                x1 = "2025-01-01", y1 = params$MaxDepth,
                 line = list(color = "black", dash = "dot"))
          ))
 
@@ -202,28 +202,28 @@ secchi_plot_yearly <- plot_ly(yearly_avg, x = ~Year,
          shapes = list(
            list(type = "rect",
                 x0 = 2015, y0 = 0.0,
-                x1 = 2024, y1 = 2.0,
+                x1 = 2025, y1 = 2.0,
                 fillcolor = "#046404",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
                 x0 = 2015, y0 = 2.0,
-                x1 = 2024, y1 = y1_2,
+                x1 = 2025, y1 = y1_2,
                 fillcolor = "#00b3b3",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "rect",
                 x0 = 2015, y0 = 6,
-                x1 = 2024, y1 = y1_3,
+                x1 = 2025, y1 = y1_3,
                 fillcolor = "#66ccff",
                 opacity = 1,
                 layer = "below",
                 line = list(width = 0)),
            list(type = "line",
                 x0 = 2015, y0 = params$MaxDepth,
-                x1 = 2024, y1 = params$MaxDepth,
+                x1 = 2025, y1 = params$MaxDepth,
                 line = list(color = "black", dash = "dot"))
          ))
 
@@ -276,7 +276,7 @@ The graphs below shows how your lake ranks compared to data collected by CT DEEP
 quartiles <- quantile(deep_data$Transparency, probs = c(0.25, 0.5, 0.75))
 
 # bolton's average transparency
-avg <- mean(daily_avg$daily_avg)
+avg <- mean(daily_avg$daily_avg, na.rm = TRUE)
 
 # Determine quartile for your lake's average
 if (avg <= quartiles[1]) {

@@ -1,0 +1,318 @@
+---
+title: "[![](ctlw_logo_v2.png){width=2000px}](https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Connecticut-Lake-Watch) "
+geometry: "left=0.25cm,right=0.25cm,top=0.25cm,bottom=0.25cm"
+fontsize: 11pt
+output:
+  html_document:
+    number_sections: no
+    toc: yes
+    toc_float: yes
+    css: style.css
+params:
+  SiteID: Long Pond, New London County, CT, USA
+  MaxDepth: 10
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.align = 'center')
+```
+<div class="section">
+```{r importData}
+
+# setwd("P:\\R\\VolMon_LakeWatch_LakeReport")
+
+library(leaflet)
+library(ggplot2)
+library(plotly)
+library(dplyr)
+
+# for comparing your lake to our data
+deep_data <- read.csv("ctdeep_secchi_depth_2012_2023.csv")
+
+basd <- "https://www.waterqualitydata.us/data/Result/search?"
+bass <- "https://www.waterqualitydata.us/data/Station/search?" #my stations only
+chr1 <- "characteristicName=Depth%2C%20Secchi%20disk%20depth"
+chr2 <- "&characteristicName=Temperature%2C%20water"
+proj <- "&project=Connecticut%20Lake%20Watch"
+proj2 <- "&project=CTLakeWatch" #what i uploaded
+sdat <- "&startDateLo=01-01-2021"
+dprf <- "&dataProfile=resultPhysChem"
+mime <- "&mimeType=csv"
+zipt <- "&zip=no"
+prvd <- "&providers=STORET"
+
+data_http <- paste0(basd, chr1, chr2, proj, proj2, dprf, mime, zipt, prvd)
+stations_http <- paste0(bass, chr1, proj, proj2, sdat, mime, zipt, prvd)
+
+data <- read.csv(data_http)
+# stations <- read.csv(stations_http) #for now manually reading due to 2 data sources
+# stations <- subset(stations, stations$MonitoringLocationName != "CT-11-8") # station not formatted correctly
+stations <- read.csv("stations.csv") #these stations were manually looked over based on what was submitted by me or NALMS
+
+# manipulating the data
+data <- subset(data, data$ResultDepthHeightMeasure.MeasureValue <= 1 | is.na(data$ResultDepthHeightMeasure.MeasureValue)) #only surface temp (0-1) or Secchi reading (NA)
+data_avg <- data %>%
+  group_by(MonitoringLocationName, ActivityStartDate, CharacteristicName, ResultMeasure.MeasureUnitCode) %>%
+  summarise(daily_avg = mean(ResultMeasureValue))
+data_avg$ActivityStartDate <- as.POSIXct(data_avg$ActivityStartDate)
+
+```
+<hr>
+# `r params$SiteID` Report
+<i>Report Last Updated: `r format(Sys.Date(), '%B %Y')`</i>
+
+
+## Program Information
+<hr>
+
+The Connecticut Lake Watch network is a statewide volunteer (i.e., community science) water quality monitoring program coordinated by the 
+Connecticut Department of Energy and Environmental Protection (DEEP)
+as part of the larger <a href = "https://portal.ct.gov/DEEP/Water/Inland-Water-Monitoring/Volunteer-Water-Monitoring-Program">Connecticut Volunteer Water Monitoring Program.</a> Connecticut Lake Watch participants are trained to monitor lake/pond water clarity using a Secchi disk and thermometer. Monitoring ideally occurs weekly from early spring until fall. 
+
+
+## Station Location
+<hr>
+
+```{r leaflet maps, out.width="100%"}
+
+site <- subset(stations, stations$MonitoringLocationName == params$SiteID)
+
+sViewLon <- mean(site$LongitudeMeasure) #accounts for multiple points
+sViewLat <- mean(site$LatitudeMeasure)
+
+leaflet(data = site, options = leafletOptions(minZoom = 8, maxZoom = 18)) %>%
+  setView(lng = sViewLon, lat = sViewLat, zoom = 14) %>%
+  addTiles() %>%
+  addProviderTiles("Esri.WorldGrayCanvas", group = "Esri GrayCanvas") %>%
+  addMarkers(~LongitudeMeasure, ~LatitudeMeasure, label = ~MonitoringLocationName,
+             labelOptions = labelOptions(permanent = FALSE))
+```
+
+## Secchi Depth Data {.tabset}
+<hr>
+
+Below, you can toggle between daily average and yearly average secchi depth values. The graphs have been scaled to the approximate maximum depth of the waterbody, represented by the horizontal dotted line.
+<br>
+<br>
+<div class = "eutrophic"></div>Eutrophic&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "mesotrophic"></div>Mesotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "oligotrophic"></div>Oligotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "whiteBox"></div>
+<br>
+
+### Daily Average
+```{r daily avg plot, out.width="100%"}
+
+daily_avg <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Depth, Secchi disk depth")
+y1_2 <- ifelse(params$MaxDepth < 6.0, params$MaxDepth, 6.0)
+y1_3 <- ifelse(params$MaxDepth > 6.0, params$MaxDepth, 6.0)
+
+mid_x <- mean(range(daily_avg$ActivityStartDate))
+
+secchi_plot_daily <- plot_ly(daily_avg, x = ~ActivityStartDate, 
+                       y = ~daily_avg, 
+                       type = 'scatter', 
+                       mode = 'markers', 
+                       hoverinfo = 'text',
+                       text = ~paste("Date:", ActivityStartDate, "<br>", "Value:", daily_avg, " m"),
+                       marker = list(size = 10, color = "white", line = list(color = "black", width = 1))) %>%
+  layout(yaxis = list(autorange = "reversed", 
+                      dtick = 2,
+                      tick0 = 0,
+                      showgrid = FALSE, 
+                      title = "Secchi Depth (m)"), 
+         xaxis = list(showgrid = FALSE, 
+                      title = "Year"), 
+         title = list(text = "Daily Average Summer Secchi Disk Readings", 
+                      size = 14),
+         annotations = list(
+           x = mid_x,
+           y = params$MaxDepth,
+           text = "Lake Max Depth",
+           arrowcolor = "#f6931f",
+           font = list(
+             color = "black")
+         ),
+         shapes = list(
+           list(type = "rect",
+                x0 = "2015-01-01", y0 = 0.0,
+                x1 = "2025-01-01", y1 = 2,
+                fillcolor = "#046404",
+                opacity = 1,
+                layer = "below",
+                line = list(width = 0)),
+           list(type = "rect",
+                x0 = "2015-01-01", y0 = 2,
+                x1 = "2025-01-01", y1 = y1_2,
+                fillcolor = "#00b3b3",
+                opacity = 1,
+                layer = "below",
+                line = list(width = 0)),
+           list(type = "rect",
+                x0 = "2015-01-01", y0 = 6,
+                x1 = "2025-01-01", y1 = y1_3,
+                fillcolor = "#66ccff",
+                opacity = 1,
+                layer = "below",
+                line = list(width = 0)),
+           list(type = "line",
+                x0 = "2015-01-01", y0 = params$MaxDepth,
+                x1 = "2025-01-01", y1 = params$MaxDepth,
+                line = list(color = "black", dash = "dot"))
+         ))
+
+secchi_plot_daily
+```
+
+### Yearly Average
+```{r yearly avg plot, out.width="100%"}
+
+daily_avg$Year <- as.numeric(format(daily_avg$ActivityStartDate, "%Y"))
+yearly_avg <- daily_avg %>%
+  group_by(Year) %>%
+  summarize(yearly_avg = mean(daily_avg))
+yearly_avg$yearly_avg <- round(yearly_avg$yearly_avg, 2)
+
+mid_x <- mean(range(yearly_avg$Year))
+
+secchi_plot_yearly <- plot_ly(yearly_avg, x = ~Year, 
+                       y = ~yearly_avg, 
+                       type = 'scatter', 
+                       mode = 'markers', 
+                       hoverinfo = 'text',
+                       text = ~paste("Year:", Year, "<br>", "Value:", yearly_avg, " m"),
+                       marker = list(size = 10, color = "white", line = list(color = "black", width = 1))) %>%
+  layout(yaxis = list(autorange = "reversed", 
+                      dtick = 2,
+                      tick0 = 0,
+                      showgrid = FALSE, 
+                      title = "Secchi Depth (m)"), 
+         xaxis = list(showgrid = FALSE, 
+                      title = "Year"), 
+         title = list( text = "Yearly Average Summer Secchi Disk Readings", 
+                       size = 14),
+                  annotations = list(
+           x = mid_x,
+           y = params$MaxDepth,
+           text = "Lake Max Depth",
+           arrowcolor = "#f6931f",
+           font = list(
+             color = "black")
+         ),
+         shapes = list(
+           list(type = "rect",
+                x0 = 2015, y0 = 0.0,
+                x1 = 2025, y1 = 2.0,
+                fillcolor = "#046404",
+                opacity = 1,
+                layer = "below",
+                line = list(width = 0)),
+           list(type = "rect",
+                x0 = 2015, y0 = 2.0,
+                x1 = 2025, y1 = y1_2,
+                fillcolor = "#00b3b3",
+                opacity = 1,
+                layer = "below",
+                line = list(width = 0)),
+           list(type = "rect",
+                x0 = 2015, y0 = 6,
+                x1 = 2025, y1 = y1_3,
+                fillcolor = "#66ccff",
+                opacity = 1,
+                layer = "below",
+                line = list(width = 0)),
+           list(type = "line",
+                x0 = 2015, y0 = params$MaxDepth,
+                x1 = 2025, y1 = params$MaxDepth,
+                line = list(color = "black", dash = "dot"))
+         ))
+
+secchi_plot_yearly
+```
+
+## Water Temperature Data
+<hr>
+```{r temp plot, results='asis', out.width="100%"}
+temp <- subset(data_avg, data_avg$MonitoringLocationName == params$SiteID & data_avg$CharacteristicName == "Temperature, water")
+temp$daily_avg <- ifelse(temp$ResultMeasure.MeasureUnitCode == "deg F", 
+                (temp$daily_avg - 32) / 1.8, temp$daily_avg) # convert F to C
+temp$daily_avg <- round(temp$daily_avg, 2)
+temp$Year <- as.numeric(format(temp$ActivityStartDate, "%Y"))
+
+if (nrow(temp) == 0) {
+  cat('<div>There is no surface water temperature data available for this lake.</div>') # prints this instead of broken graph if no temp data
+} else {
+  temp_plot <- plot_ly(temp, x = ~ActivityStartDate, 
+                       y = ~daily_avg, 
+                       type = 'scatter', 
+                       mode = 'markers', 
+                       hoverinfo = 'text',
+                       text = ~paste("Date:", ActivityStartDate, "<br>", "Value:", daily_avg, " deg C"),
+                       marker = list(size = 10, color = "white", line = list(color = "black", width = 1))) %>%
+    layout(yaxis = list(title = "Daily Average Temperature (deg C)"), 
+           xaxis = list(showgrid = FALSE, 
+                        title = "Year"), 
+           title = list(text = "Surface (0 - 1 foot) Water Temperature", 
+                        size = 14))
+  temp_plot
+} 
+```
+## How Does Your Lake Compare?
+<hr>
+
+The graphs below shows how your lake ranks compared to data collected by CT DEEP over the past 10 years, across all lakes in the state.  For Secchi Depth, an upper percentile indicates that your lake has higher water clarity*. 
+<br>
+<br>
+<div class = "eutrophic"></div>Eutrophic&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "mesotrophic"></div>Mesotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "oligotrophic"></div>Oligotrophic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div class = "yourLake"></div>Your Lake's Average
+<div class = "whiteBox"></div>
+<br>
+<br>
+```{r quartiles}
+
+# quartiles for comparison to selected lake
+quartiles <- quantile(deep_data$Transparency, probs = c(0.25, 0.5, 0.75))
+
+# bolton's average transparency
+avg <- mean(daily_avg$daily_avg, na.rm = TRUE)
+
+# Determine quartile for your lake's average
+if (avg <= quartiles[1]) {
+  quartile <- "below the 25th"
+} else if (avg <= quartiles[2]) {
+  quartile <- "between the 25th and 50th"
+} else if (avg <= quartiles[3]) {
+  quartile <- "between the 50th and 75th"
+} else {
+  quartile <- "above the 75th"
+}
+```
+Your lake's average Secchi Depth falls in the <b>`r quartile` percentile </b> of all lakes sampled in CT by DEEP in the last 10 years.
+<br>
+<br>
+The max depth of your lake is <b>`r params$MaxDepth` meters </b>.
+```{r boxplot}
+# Create box plot
+box_plot <- ggplot(deep_data, aes(x = "", y = Transparency)) +
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 0, ymax = 2.0),
+            fill = "#046404", alpha = 0.5) +
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 2.0, ymax = 6),
+            fill = "#00b3b3", alpha = 0.5) +
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 6, ymax = 15),
+            fill = "#66ccff", alpha = 0.5) +
+  geom_boxplot(width = 0.7) +
+  xlab("") +
+  ylab("Secchi Depth (m)") +
+  geom_hline(yintercept = avg, color = "#f6931f", size = 2) +
+  geom_text(aes(x = 1, y = (avg - 0.4), label = "Your Lake's Average")) +
+  scale_y_reverse(breaks=c(0, 2, 4, 6, 8, 10, 12, 14))
+
+box_plot
+```
+
+*Water clarity refers to the clearness or transparency of water and is affected by particles in the water column. Water clarity is determined by using a 20 cm disk called a Secchi disk. The maximum depth that the Secchi disk can be seen from the surface is the Secchi depth value. Secchi depth can be used to estimate the trophic status of a waterbody.  Secchi depth can vary based on natural and anthropogenic (human) conditions
+in and around lakes.  For more information see <a href = "#">CT DEEP's Lake Manual</a>.
+
+</div>

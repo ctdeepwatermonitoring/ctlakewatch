@@ -18,10 +18,11 @@ for (i in siteIDs) {
   # replace the parameter
   base <- gsub("SiteID: .*", paste("SiteID:", stationID), base)
   # write files to reports subfolder
-  outputFile <- file.path("P:/R/ctlakewatch/reports", paste0(comID, ".Rmd"))
+  lfPath <- "C:/Users/deepuser/Documents/Projects/ProgramDev/ctlakewatch/"
+  outputFile <- file.path(lfPath, paste0(comID, ".Rmd"))
   writeLines(base, outputFile)
   # render rmd file
   render(input = outputFile, 
-         output_file = file.path("P:/R/ctlakewatch/reports", paste0(comID, ".html")),
+         output_file = file.path(paste0(lfPath,"reports"), paste0(comID, ".html")),
          output_format = "html_document")  
 }
