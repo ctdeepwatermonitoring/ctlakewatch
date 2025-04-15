@@ -10,7 +10,7 @@ output:
     css: style.css
 params:
   SiteID: Rainbow Pond, Hartford County, CT, USA
-  MaxDepth: 10
+  MaxDepth: 10.7
 ---
 
 ```{r setup, include = FALSE}

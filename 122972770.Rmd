@@ -10,7 +10,7 @@ output:
     css: style.css
 params:
   SiteID: Wononskopomuc Lake, Litchfield County, CT, USA
-  MaxDepth: 10
+  MaxDepth: 32.9
 ---
 
 ```{r setup, include = FALSE}

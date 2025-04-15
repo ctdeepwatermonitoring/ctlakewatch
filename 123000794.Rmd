@@ -10,7 +10,7 @@ output:
     css: style.css
 params:
   SiteID: Hurds Lake, Tolland County, CT, USA
-  MaxDepth: 10
+  MaxDepth: 3.5
 ---
 
 ```{r setup, include = FALSE}

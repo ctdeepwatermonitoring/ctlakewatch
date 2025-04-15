@@ -10,7 +10,7 @@ output:
     css: style.css
 params:
   SiteID: Bush Pond, New London County, CT, USA
-  MaxDepth: 10
+  MaxDepth: 3.6
 ---
 
 ```{r setup, include = FALSE}

@@ -10,7 +10,7 @@ output:
     css: style.css
 params:
   SiteID: Bolton Lakes, Tolland County, CT, USA
-  MaxDepth: 10
+  MaxDepth: 5.9
 ---
 
 ```{r setup, include = FALSE}

@@ -10,7 +10,7 @@ output:
     css: style.css
 params:
   SiteID: Lake Candlewood, Fairfield County, CT, USA
-  MaxDepth: 10
+  MaxDepth: 12.2
 ---
 
 ```{r setup, include = FALSE}
