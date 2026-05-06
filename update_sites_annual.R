@@ -20,7 +20,7 @@ stations <- read.csv("stations.csv")
 '%!in%' <- function(x,y)!('%in%'(x,y))
 
 data <- data[ ,c(1,7,21,24,25,30,31,40,42,43)]
-data <- data[data$ActivityStartDate > "2024-03-31",]
+data <- data[data$ActivityStartDate > "2025-03-31",]
 wqx_sites <- unique(data[c("MonitoringLocationIdentifier",
                            "MonitoringLocationName")])
 
@@ -29,4 +29,4 @@ new_sites <- wqx_sites[wqx_sites$MonitoringLocationIdentifier %!in%
 new_sites <- merge(new_sites, wqx_stations[ ,c(3:5,12:13)], 
                    by = "MonitoringLocationIdentifier")
 
-write.csv(new_sites, "new_rpt_sites_ctlakewatch_2024.csv", row.names = FALSE)
+write.csv(new_sites, "new_rpt_sites_ctlakewatch_2025.csv", row.names = FALSE)

@@ -1,5 +1,7 @@
 # script for generating lake watch reports on a loop
-# setwd("P:/R/ctlakewatch/reports")
+### Before running this script:
+# 1. Run update_sites_annual and paste new sites to the bottom of the "stations.csv" file, get the com ID from the lakes shapefile and maxdepth from our historic klake information
+# 2. In the lakewatchReprort.v2.Rmd change max dates of the graph to the current current year 
 
 library(dplyr)
 library(rmarkdown)
@@ -15,13 +17,13 @@ for (i in siteIDs) {
   stationID <- unique(station$MonitoringLocationName)
   maxDepth <- unique(station$MaxDepth)
   # base file to modify
-  base <- readLines("C:/Users/deepuser/Documents/Projects/ProgramDev/ctlakewatch/lakewatchReportv2.Rmd")
+  base <- readLines("C:/Users/LandryJes/Documents/ctlakewatch/lakewatchReportv2.Rmd")
   # replace the station
   base <- gsub("SiteID: .*", paste("SiteID:", stationID), base)
   # replace the depth
   base <- gsub("MaxDepth: .*", paste("MaxDepth:", maxDepth), base)
   # write files to reports subfolder
-  lfPath <- "C:/Users/deepuser/Documents/Projects/ProgramDev/ctlakewatch/"
+  lfPath <- "C:/Users/LandryJes/Documents/ctlakewatch/"
   outputFile <- file.path(lfPath, paste0(comID, ".Rmd"))
   writeLines(base, outputFile)
   # render rmd file
